@@ -1,0 +1,43 @@
+%% EX 1
+%{
+Implement the code to propagate the orbit1:
+- Identify the states of the system and the physical parameters involved
+- Write the second-order ODE describing dynamics
+- Reduce the problem to a first-order ODE system
+- Implement the odefun MATLAB function for this ODE system
+Write a main script to integrate numerically the system, choosing one of MATLAB-s solvers and setting-its options as needed. 
+%}
+
+% eq. of motion: r_dot_dot + mu/(norm(r)^3)*r = 0
+mu = astroConstants(13);
+r_0 = [26578.137, 0, 0]'; v_0 = [0, 2.221, 3.173]';
+r_0 = [6495, -970, -3622]'; v_0 = [4.752, 2.130, 7.950]';
+s_0 = [r_0; v_0];
+
+v0_norm = norm(v_0); r0_norm = norm(r_0);
+eps_0 = v0_norm^2/2 - mu/r0_norm;
+a = 1/( 2/norm(r_0) - dot(v_0,v_0)/mu );
+T = 2*pi*sqrt(a^3/mu);
+%% not perturbated
+keplerian_orbit_ode(s_0,[0 5*T],mu);
+%% perturbated
+Re = astroConstants(23);
+J2 = astroConstants(9);
+keplerian_orbit_ode(s_0,[0 5*T],mu,'J2',J2,Re)
+%% perturbated 1 year
+options = odeset( 'RelTol', 1e-13, 'AbsTol', 1e-14);
+tspan = linspace(0,600*T,600*1000);
+[t, y] = ode113(@(t,y) ode_2bp_J2(t,y,mu,J2,Re), tspan, s_0, options);
+N_periodi = 600;
+cmap = jet(N_periodi);
+Earth3d;
+for i = 1:N_periodi
+    % Indici che corrispondono al periodo corrente
+    idx_start = (i-1)*1000 + 1;
+    idx_end = i*1000;
+    
+    % Traccia il segmento dell'orbita con il colore corrispondente
+    plot3(y(idx_start:idx_end,1), y(idx_start:idx_end,2), y(idx_start:idx_end,3),'Color', cmap(i, :), 'LineWidth', 1); hold on;
+end
+
+

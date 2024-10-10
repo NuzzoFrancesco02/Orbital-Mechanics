@@ -1,0 +1,13 @@
+function [alpha, delta, l, m, n] = eci2ra(r)
+if size(r,2) > 3
+        r = r';
+end
+l = r(:,)
+r_norm = vecnorm(r,2,2);
+delta = (asin(r(:,3)./r_norm))';
+alpha =  (acos(r(:,1)./r_norm(:)./cos(delta(:))))';
+for i = 1 : length(alpha)
+    if r(i,2) <= 0
+        alpha(i) = 2*pi - alpha(i);
+    end
+end

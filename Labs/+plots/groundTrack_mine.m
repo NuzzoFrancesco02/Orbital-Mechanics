@@ -27,8 +27,11 @@ function [alpha, delta, lon, lat, t] = groundTrack_mine(t0, a, e, i, OM, om, th0
 %
 % CONTRIBUTORS:
 % Francesco Nuzzo
+%
+% VERSIONS:
+% 2024-10-28: First version
+%
 % -------------------------------------------------------------------------
-
     % Generate the true anomaly vector and compute the time vector
     th = linspace(th0, thf, 10000);
     t = elliptic.kepler_inv_equation(e, a, mu, t0, th);

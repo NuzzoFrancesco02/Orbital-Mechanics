@@ -1,8 +1,0 @@
-function [t, E, M] = kepler_inv_equation(e, a, mu, t0, th)
-    
-    E = 2*atan2(sqrt((1-e)/(1+e)).*tan(th./2),1) + 2*pi .* (floor(th./(2*pi)));
-    M = E - e.*sin(E) + 2*pi .* (floor(E./(2*pi)));
-    n = sqrt( mu / a^3 );
-    t = t0 + M/n;
-    t = t - t0;
-end

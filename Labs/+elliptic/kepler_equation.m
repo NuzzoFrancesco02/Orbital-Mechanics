@@ -32,8 +32,8 @@ function [th, E, M] = kepler_equation(t, e, a, mu, t0, th0, toll)
     end
     
     % Calculate mean motion
-    n = sqrt(mu / a^3);
-
+    n = sqrt(mu / a^3); T = 2*pi/n;
+    n_orbs = floor(t./T);
     % Initial eccentric anomaly (E0)
     E0 = 2 * atan(sqrt((1 - e) / (1 + e)) * tan(th0 / 2));
     
@@ -48,7 +48,7 @@ function [th, E, M] = kepler_equation(t, e, a, mu, t0, th0, toll)
     E = fsolve(@(E) n * dt - E + e * sin(E) + E0 - e * sin(E0), E_guess, options);
     
     % Calculate true anomaly (th) from eccentric anomaly (E)
-    th = 2 * atan2(sqrt((1 + e) / (1 - e)) * tan(E / 2), 1);
+    th = 2 * atan2(sqrt((1 + e) / (1 - e)) * tan(E / 2), 1) + n_orbs.*2*pi;
     
     % Calculate mean anomaly (M)
     M = n * dt;

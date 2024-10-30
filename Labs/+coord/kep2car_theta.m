@@ -45,6 +45,7 @@ elseif e > 1  % Hyperbolic case
     end
 end
 
+
 % Transformation matrix from perifocal to Cartesian coordinates
 R3 = [cos(OM) sin(OM) 0; -sin(OM) cos(OM) 0; 0 0 1];
 R2 = [1 0 0; 0 cos(i) sin(i); 0 -sin(i) cos(i)];
@@ -72,5 +73,7 @@ for j = 1:length(theta)
     
     % Convert position and velocity to Cartesian coordinates
     r = [r, R * r_pf];
+    
     v = [v, R * v_pf];
+  
 end

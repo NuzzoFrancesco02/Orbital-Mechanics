@@ -1,8 +1,8 @@
-function [alpha, delta, lon, lat, t] = groundTrack_mine(t0, a, e, i, OM, om, th0, thf, Green_lon0, om_E, mu, str)
+function [alpha, delta, lon, lat, t] = groundTrack_mine(t0, r, v, n_orb, Green_lon0, om_E, mu, str)
 % groundTrack_mine - Computes the ground track of a spacecraft based on orbital elements.
 %
 % PROTOTYPE:
-% [alpha, delta, lon, lat, t] = groundTrack_mine(t0, a, e, i, OM, om, th0, thf, Green_lon0, om_E, mu, str)
+% [alpha, delta, lon, lat, t] = groundTrack_mine(t0, a, e, i, OM, om, th0, n_orb, Green_lon0, om_E, mu, str)
 %
 % INPUT:
 % t0           - Initial time [T]
@@ -12,7 +12,7 @@ function [alpha, delta, lon, lat, t] = groundTrack_mine(t0, a, e, i, OM, om, th0
 % OM           - RAAN (Right Ascension of Ascending Node) [rad]
 % om           - Argument of periapsis [rad]
 % th0          - Initial true anomaly [rad]
-% thf          - Final true anomaly [rad]
+% n_orb        - Number of orbits [-]
 % Green_lon0   - Initial Greenwich longitude [rad]
 % om_E         - Angular velocity of Earth rotation [rad/s]
 % mu           - Gravitational parameter [L^3/T^2]
@@ -27,62 +27,81 @@ function [alpha, delta, lon, lat, t] = groundTrack_mine(t0, a, e, i, OM, om, th0
 %
 % CONTRIBUTORS:
 % Francesco Nuzzo
+%
+% VERSIONS:
+% 2024-10-28: First version
+%
 % -------------------------------------------------------------------------
-
     % Generate the true anomaly vector and compute the time vector
-    th = linspace(th0, thf, 10000);
-    t = elliptic.kepler_inv_equation(e, a, mu, t0, th);
+    if min(size(r)) == 1 && min(size(v)) == 1
+        [a, e, i, OM, om, th0] = coord.car2kep_theta(r,v,mu);
+        T = 2*pi*sqrt(a^3/mu);
+        thf = elliptic.kepler_equation(n_orb*T,e,a,mu,t0,th0,1e-8);
+        th = linspace(th0, thf, 10000);
+        t = elliptic.kepler_inv_equation(e, a, mu, t0, th);
+        J2 = astroConstants(9);
+        Re = astroConstants(23);
+        if strcmp(str, 'J2')
+            fac = -3/2 * sqrt(mu) * J2 * Re^2 / (1 - e^2)^2 / a^(7/2);
+        else
+            fac = 0;
+        end
+        OMdot = fac * cos(i);
+        omdot = fac * (5/2 * sin(i)^2 - 2);
+    else
+        r_rel = r;
+    end
     
     % Apply J2 perturbation if selected
-    J2 = astroConstants(9);
-    Re = astroConstants(23);
-    if strcmp(str, 'J2')
-        fac = -3/2 * sqrt(mu) * J2 * Re^2 / (1 - e^2)^2 / a^(7/2);
-    else
-        fac = 0;
-    end
-    OMdot = fac * cos(i);
-    omdot = fac * (5/2 * sin(i)^2 - 2);
+    
 
     % Compute position in ECI, transform to ECEF
-    r_rel = [];
-    for j = 1 : length(t)
-        r = coord.kep2car_theta(a, e, i, OM + OMdot * t(j), om + omdot * t(j), th(j), mu);
-        theta = om_E * (t(j) - t(1));
-        Q = [cos(theta) sin(theta) 0; -sin(theta) cos(theta) 0; 0 0 1];
-        r_rel = [r_rel; (Q * r)'];
+    if min(size(r)) == 1 && min(size(v)) == 1
+        r_rel = [];
+        for j = 1 : length(t)
+            r = coord.kep2car_theta(a, e, i, OM + OMdot * t(j), om + omdot * t(j), th(j), mu);
+            theta = om_E * (t(j) - t(1));
+            Q = [cos(theta) sin(theta) 0; -sin(theta) cos(theta) 0; 0 0 1];
+            r_rel = [r_rel; (Q * r)'];
+        end
     end
 
     % Convert to right ascension and declination
     [alpha, delta] = coord.eci2ra(r_rel);
 
     % Calculate longitude and latitude
-    lon = wrapTo2Pi(alpha - Green_lon0);
+    lon = wrapToPi(alpha - Green_lon0);
     lat = delta;
 
     % Handle large jumps in longitude
     lon_diff = diff(lon);
-    large_jump_lon = [false; abs(lon_diff) > pi / 2];
+    large_jump_lon = [false; abs(lon_diff) > pi / 10];
     lon(large_jump_lon) = NaN;
     lat(large_jump_lon) = NaN;
     t(large_jump_lon) = NaN;
 
-    % Display the ground track over an Earth map
-    img = imread('8081_earthmap10k.jpg');
-    figure;
-    imagesc([-180 180], [-90 90], flipud(img));
-    set(gca, 'YDir', 'normal');
-    hold on;
     
     % Plot the trajectory
-    plot(rad2deg(lon) - 180, rad2deg(lat), 'r', 'LineWidth', 2);
-    plot(rad2deg(lon(1)) - 180, rad2deg(lat(1)), 'bo', 'MarkerSize', 13, 'LineWidth', 2);
-    plot(rad2deg(lon(end - 1)) - 180, rad2deg(lat(end - 1)), 'go', 'MarkerSize', 13, 'LineWidth', 2);
-    xlim([-180 180]);
-    ylim([-90 90]);
-    xlabel('Longitude [deg]');
-    ylabel('Latitude [deg]');
-    grid on;
+    h = figure('Name','Ground Track');
+    set(h, 'Units', 'Normalized', 'OuterPosition', [.15 .25 .7 .7]);
+    
+    image_file = '8081_earthmap10k.jpg';
+    cdata      = flip(imread(image_file));
+    h_img = imagesc([-180,180],[-90, 90],cdata);
+    uistack(h_img, 'bottom');
+    hold on;
+    axis equal;
+    set(gca,'XTick',[-180:15:180],'XTickMode','manual');
+    set(gca,'YTick',[-90:10:90],'YTickMode','manual');
+    xlim([-180,180]); ylim([-90,90]);
+
+    plot(rad2deg(lon) , rad2deg(lat), 'r', 'LineWidth', 2);
+    plot(rad2deg(lon(1)) , rad2deg(lat(1)), 'bo', 'MarkerSize', 13, 'LineWidth', 2);
+    plot(rad2deg(lon(end - 1)) , rad2deg(lat(end - 1)), 'go', 'MarkerSize', 13, 'LineWidth', 2);
+    xlabel('Longitude \lambda [deg]');
+    ylabel('Latitude \phi [deg]');
+    grid on; 
+    set(gca,'GridLineStyle','--','GridLineWidth',2,'GridColor','k')
     hold off;
     
     % Comet plot for the trajectory

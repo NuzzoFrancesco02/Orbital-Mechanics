@@ -49,6 +49,7 @@ function [r, v, t, theta] = kep2car_time(t, a, e, i, OM, w, th0, mu)
         % Convert Keplerian elements to Cartesian coordinates over the interpolated range
         [r, v] = coord.kep2car_theta(a, e, i, OM, w, theta, mu);  % Convert to ECI
         
+        
         % Recalculate the time vector using inverse Kepler's equation
         t = elliptic.kepler_inv_equation(e, a, mu, t(1), th0, theta);  % Time corresponding to true anomaly
     end

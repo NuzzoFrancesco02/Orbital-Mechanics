@@ -24,6 +24,10 @@ function static_orbit(r)
     plots.Earth3d 
     
     % Plot the 3D orbit path using position vectors
+    [~,min_dim] =  min(size(r));
+    if  min_dim == 1
+        r = r';
+    end
     plot3(r(:,1), r(:,2), r(:,3), 'LineWidth', 2); 
     
     % Label the axes for better understanding of the plot

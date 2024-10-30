@@ -1,4 +1,4 @@
-function [a, e, i, OM, om, th] = car2kep(r, v, mu)
+function [a, e, i, OM, om, th] = car2kep_theta(r, v, mu)
 % car2kep.m - Conversion from Cartesian coordinates to Keplerian elements
 %
 % PROTOTYPE:
@@ -23,20 +23,24 @@ function [a, e, i, OM, om, th] = car2kep(r, v, mu)
 x = [1 0 0]';
 y = [0 1 0]';
 z = [0 0 1]';
-l = size(r,2);
+l = max(size(r,2));
 
 
 E = 0.5*norm(v)^2-mu/norm(r);
 a = -mu/(2*E); %
 e_vet = ((norm(v)^2-mu/norm(r))*r-dot(r,v)*v)/mu;
 e = norm(e_vet); %
+if e < eps
+    e = 0;
+end
 h = cross(r(:,1),v(:,1)); 
 
 
 i = acos(dot(h,z)/norm(h));
+
 if i == 0
     OM = 0; om = 0;
-else
+elseif e ~= 0
     N = cross(z,h);
     OM = acos(dot(N,x)/norm(N));
     if dot(N,y) < 0
@@ -46,13 +50,25 @@ else
     if dot(e_vet,z) < 0
         om = 2*pi - om;
     end
+elseif e == 0 
+    om = 0; 
+    N = cross(z,h);
+    OM = acos(dot(N,x)/norm(N));
+    if dot(N,y) < 0
+        OM = 2*pi - OM;
+    end
 end
 th = [];
 for j = 1 : l
     vr = dot(r(:,j),v(:,j))./norm(r);
-    if vr < 0
-        th = [th 2*pi - acos(dot(e_vet,r(:,j))/(e*norm(r)))];
+    if i == 0 && e == 0
+        th = [th acos(dot(x,r(:,j))/norm(r(:,j)))];
     else
-        th = [th acos(dot(e_vet,r(:,j))/(e*norm(r)))];
+ 
+        if vr < 0
+            th = [th 2*pi - real(acos(dot(e_vet,r(:,j))/(e*norm(r))))];
+        else
+            th = [th real(acos(dot(e_vet,r(:,j))/(e*norm(r))))];
+        end
     end
 end

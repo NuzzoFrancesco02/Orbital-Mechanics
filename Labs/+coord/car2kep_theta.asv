@@ -30,17 +30,17 @@ E = 0.5*norm(v)^2-mu/norm(r);
 a = -mu/(2*E); %
 e_vet = ((norm(v)^2-mu/norm(r))*r-dot(r,v)*v)/mu;
 e = norm(e_vet); %
-if e < 1e-15
+if e < eps
     e = 0;
 end
 h = cross(r(:,1),v(:,1)); 
 i = acos(dot(h,z)/norm(h));
 
 
-N = cross(z,h);
+
 if e ~= 0
     if i ~= 0
-        
+        N = cross(z,h);
         OM = acos(dot(N,x)/norm(N));
         if dot(N,y) < 0
             OM = 2*pi - OM;
@@ -48,22 +48,20 @@ if e ~= 0
     else
         OM = 0;
     end
-   
-    om = acos(dot(N,e_vet)/(norm(N)*e));
-    if dot(e_vet,z) < 0
-        om = 2*pi - om;
+    if e ~= 0
+        om = acos(dot(N,e_vet)/(norm(N)*e));
+        if dot(e_vet,z) < 0
+            om = 2*pi - om;
+        end
+    else 
+        om = 0;
     end
-
 elseif e == 0 
     om = 0; 
-    if i ~= 0
-    
-        OM = acos(dot(N,x)/norm(N));
-        if dot(N,y) < 0
-            OM = 2*pi - OM;
-        end
-    else
-        OM = 0;
+    N = cross(z,h);
+    OM = acos(dot(N,x)/norm(N));
+    if dot(N,y) < 0
+        OM = 2*pi - OM;
     end
 end
 th = [];

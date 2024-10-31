@@ -37,8 +37,8 @@ function [alpha, delta, lon, lat, t] = groundTrack(t, r, v, n_orb, Green_lon0, o
     if min(size(r)) == 1 && min(size(v)) == 1
         [a, e, i, OM, om, th0] = coord.car2kep_theta(r, v, mu); % Cartesian to Keplerian
         T = 2 * pi * sqrt(a^3 / mu);                           % Calculate orbit period
-        thf = elliptic.kepler_equation(n_orb * T, e, a, mu, t0, th0, 1e-8); % Final true anomaly
-        th = linspace(th0, thf, 10000);                         % True anomaly vector
+        thf = elliptic.kepler_equation(n_orb * T, e, a, mu, t0, th0, 1e-14); % Final true anomaly
+        th = linspace(th0, thf, 20000);                         % True anomaly vector
         t = elliptic.kepler_inv_equation(e, a, mu, t0, th);    % Time vector from anomaly
         J2 = astroConstants(9);                                % J2 perturbation constant
         Re = astroConstants(23);                               % Earth's radius

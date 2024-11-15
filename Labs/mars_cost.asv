@@ -1,0 +1,96 @@
+%{
+function [d_v_min,dt_dep,dt_arr] = mars_cost(d_t1,d_t2)
+
+if length(d_t1) ~= length(d_t2)
+    error('Time arrays have diffferente sizes!');
+end
+
+r1 = []; r2 = []; d_v = zeros(length(d_t1));
+Nrev = 0; optionsLMR = 2; orbitType = 0; Ncase = 0;
+
+for j = 1 : length(d_t1)
+    [kep1, ksun1] = uplanet (d_t1(j), 3);
+    [r1,v1] = coord.kep2car_theta(kep1(1),kep1(2),kep1(3),kep1(4),kep1(5),kep1(6),ksun1);
+
+    for k = 1 : length(d_t2)
+        [kep2, ~] = uplanet (d_t2(k), 4);
+        [r2,v2] = coord.kep2car_theta(kep2(1),kep2(2),kep2(3),kep2(4),kep2(5),kep2(6),ksun1);
+        ToF = (d_t2(k)-d_t1(j))*24*60*60;
+        
+        [at,et,~,~,vt1,vt2,~,~] = lambertMR(r1,r2,ToF,ksun1,orbitType,Nrev,Ncase,optionsLMR);
+        
+        d_v1 = vt1-v1; d_v2 = v2-vt2;
+        d_v(j,k) = norm(d_v1)+norm(d_v2);
+    end
+end
+
+contour(d_t1,d_t2,d_v)
+[d_v_dim1,pos1] = min(d_v,[],1);
+[d_v_dim2,pos2] = min(d_v_dim1,[],2);
+d_v_min = d_v(pos1(pos2),pos2);
+
+dt_dep = d_t1(pos1(pos2))/24/60/60;
+dt_arr = d_t2(pos2)/24/60/60;
+end
+%}
+
+function [d_v_min,t_dep,t_arr] = lamb_cost(t1_start,t1_end,t2_start,t2_end,planet1,planet2,mu)
+
+t1_start = timeConversion.date2mjd2000(t1_start);
+t1_end = timeConversion.date2mjd2000(t1_end);
+t2_start = timeConversion.date2mjd2000(t2_start);
+t2_end = timeConversion.date2mjd2000(t2_end);
+
+d_t1 = linspace(t1_start,t1_end,100);
+d_t2 = linspace(t2_start,t2_end,100);
+Nrev = 0; optionsLMR = 2; orbitType = 0; Ncase = 0;
+for j = 1 : length(d_t1)
+    [kep1, ksun1] = uplanet (d_t1(j), 3);
+    [r1,v1] = coord.kep2car_theta(kep1(1),kep1(2),kep1(3),kep1(4),kep1(5),kep1(6),ksun1);
+
+    for k = 1 : length(d_t2)
+        [kep2, ~] = uplanet (d_t2(k), 4);
+        [r2,v2] = coord.kep2car_theta(kep2(1),kep2(2),kep2(3),kep2(4),kep2(5),kep2(6),ksun1);
+        ToF = (d_t2(k)-d_t1(j))*24*60*60;
+        
+        [~,~,~,~,vt1,vt2,~,~] = lambertMR(r1,r2,ToF,ksun1,orbitType,Nrev,Ncase,optionsLMR);
+        
+        d_v1 = vt1-v1; d_v2 = v2-vt2;
+        d_v(j,k) = norm(d_v1)+norm(d_v2);
+    end
+end
+[d_v_dim1,pos1] = min(d_v,[],1);
+[d_v_dim2,pos2] = min(d_v_dim1,[],2);
+d_v_min = d_v(pos1(pos2),pos2);
+
+t_dep = d_t1(pos1(pos2));
+t_arr = d_t2(pos2);
+
+
+% Funzione obiettivo per fmincon
+objective = @(t) compute_delta_v(t(1), t(2),planet1,planet2,mu);
+
+% Vincoli di disuguaglianza: t2 > t1
+nonlincon = @(t) deal([], t(2) - t(1)); % Nessuna disuguaglianza (ceq), solo t2 > t1
+
+% Vincoli di bounds
+lb = [d_t1(pos1(pos2)-1), d_t1(pos1(pos2)+1)]; % Limite inferiore
+ub = [d_t2(pos2-1), d_t2(pos2+1)];     % Limite superiore
+
+% Punto iniziale
+%initial_guess = [mean([t1_start, t1_end]), mean([t2_start, t2_end])];
+initial_guess = [t_dep t_arr];
+
+% Risoluzione del problema con fmincon
+options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'interior-point');
+[optimal_times, fval] = fmincon(objective, initial_guess, [], [], [], [], lb, ub, nonlincon, options);
+
+% Conversione in date per output
+optimal_departure = timeConversion.mjd20002date(optimal_times(1));
+optimal_arrival = timeConversion.mjd20002date(optimal_times(2));
+
+% Visualizzazione dei risultati
+disp(['Optimal Departure Date: ', datestr(optimal_departure)]);
+disp(['Optimal Arrival Date: ', datestr(optimal_arrival)]);
+disp(['Minimum Delta V: ', num2str(fval)]);
+

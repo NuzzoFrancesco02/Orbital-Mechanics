@@ -16,9 +16,9 @@ function [r, v, theta] = kep2car_theta(a, e, i, OM, om, theta, mu)
 %   mu     [1x1]   - Gravitational parameter                 [km^3/s^2]
 %
 % OUTPUT:
-%   r      [3xN]   - Position vector in Cartesian coordinates [km]
-%   v      [3xN]   - Velocity vector in Cartesian coordinates [km/s]
-%   theta  [1xN]   - True anomaly (useful in cases where e >= 1) [rad]
+%   r      [Nx3]   - Position vector in Cartesian coordinates [km]
+%   v      [Nx3]   - Velocity vector in Cartesian coordinates [km/s]
+%   theta  [Nx1]   - True anomaly (useful in cases where e >= 1) [rad]
 %
 % CONTRIBUTORS:
 %   Francesco Nuzzo
@@ -77,3 +77,4 @@ for j = 1:length(theta)
     v = [v, R * v_pf];
   
 end
+r = r'; v = v';

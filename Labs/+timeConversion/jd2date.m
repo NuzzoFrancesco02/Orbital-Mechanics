@@ -75,7 +75,7 @@ M = mod((m+2),12) + 1;
 D = floor(d+1);
 
 % Hour, Minute and Second
-[hrs, mn, sec] = fracday2hms(mod(jd+0.5,floor(jd+0.5)));
+[hrs, mn, sec] = timeConversion.fracday2hms(mod(jd+0.5,floor(jd+0.5)));
 
 % Prepare output
 date = [Y, M, D, hrs, mn, sec];

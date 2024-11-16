@@ -99,7 +99,7 @@ t1_early = [2024, 6, 1, 0, 0, 0];
 t1_late = [2026, 11, 1, 0, 0, 0];
 t2_early = [2024, 12, 1, 0, 0, 0];
 t2_late = [2027, 6, 1, 0, 0, 0];
-[d_v_min,t_dep,t_arr] = lambert.lamb_cost(t1_early,t1_late,t2_early,t2_late,3,2,astroConstants(4),15);
+[d_v_min,t_dep,t_arr] = lambert.lamb_cost(t1_early,t1_late,t2_early,t2_late,3,2,astroConstants(4),100);
 %%
 plots.solar_sys_optim_transfer(3,2,t_dep,t_arr,0.5e-3)
 %% Mars
@@ -109,7 +109,7 @@ t1_early = [2025, 8, 1, 0, 0, 0];
 t1_late = [2031, 1, 1, 0, 0, 0];
 t2_early = [2026, 1, 1, 0, 0, 0];
 t2_late = [2032, 1, 1, 0, 0, 0];
-[d_v_min,t_dep,t_arr] = lambert.lamb_cost(t1_early,t1_late,t2_early,t2_late,3,4,astroConstants(4),15);
+[d_v_min,t_dep,t_arr] = lambert.lamb_cost(t1_early,t1_late,t2_early,t2_late,3,4,astroConstants(4),10);
 %%
 plots.solar_sys_optim_transfer(3,4,t_dep,t_arr,0.5e-3)
 %% Jupiter

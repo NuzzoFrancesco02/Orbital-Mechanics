@@ -95,6 +95,8 @@ t_dep = timeConversion.mjd20002date(optimal_times(1));
 t_arr = timeConversion.mjd20002date(optimal_times(2));
 
 % Plot Delta V map
+%figure
+%surface(d_t1,d_t2,d_v')
 figure;
 levels = 5:1:10; % Define contour levels (only integers from 5 to 10)
 contourf(d_t1, d_t2, d_v', levels, 'LineColor', 'none'); % Use filled contour for better visualization

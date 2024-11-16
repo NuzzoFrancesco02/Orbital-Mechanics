@@ -47,7 +47,10 @@ sun.ZData = sun.ZData .* 1e-2;
 % Plot departure planet orbit and position
 [kep1, ~] = uplanet(t1, planet1);
 kep2 = uplanet(t2, planet1);
-r1 = coord.kep2car_theta(kep1(1), kep1(2), kep1(3), kep1(4), kep1(5), linspace(kep1(6), kep2(6)+2*pi, 1000), mu);
+if kep2(6) < kep1(6)
+    kep2(6) = kep2(6)+2*pi;
+end
+r1 = coord.kep2car_theta(kep1(1), kep1(2), kep1(3), kep1(4), kep1(5), linspace(kep1(6), kep2(6), 1000), mu);
 r1_complete = coord.kep2car_theta(kep1(1), kep1(2), kep1(3), kep1(4), kep1(5), linspace(0, 2*pi, 1000), mu);
 
 % Plot departure planet trajectory
@@ -70,6 +73,9 @@ text((r1(1, 1) + 2e3*astroConstants(planet1+20)) * fac, ...
 % Plot arrival planet orbit and position
 [kep1, ~] = uplanet(t1, planet2);
 kep2 = uplanet(t2, planet2);
+if kep2(6) < kep1(6)
+    kep2(6) = kep2(6)+2*pi;
+end
 r2 = coord.kep2car_theta(kep2(1), kep2(2), kep2(3), kep2(4), kep2(5), linspace(kep1(6), kep2(6), 1000), mu);
 r2_complete = coord.kep2car_theta(kep2(1), kep2(2), kep2(3), kep2(4), kep2(5), linspace(0, 2*pi, 1000), mu);
 
@@ -98,6 +104,9 @@ Nrev = 0; optionsLMR = 1; orbitType = 0; Ncase = 0;
 [~, ~, ~, ~, ~, th2t] = coord.car2kep_theta(r2(end, :), vt2, mu);
 
 % Plot transfer orbit
+if th2t < th1t
+    th2t = th2t + 2*pi;
+end
 rt = coord.kep2car_theta(at, et, it, OMt, omt, linspace(th1t, th2t, 100), mu);
 h3 = plot3(rt(:, 1) .* fac, rt(:, 2) .* fac, rt(:, 3) .* fac, 'LineWidth', 2, 'Color', "#EDB120"); drawnow;
 
